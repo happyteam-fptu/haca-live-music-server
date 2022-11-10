@@ -18,17 +18,13 @@ const { connect } = require("http2");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const api = {};
-let serverUptime = process.uptime();
-var server_port = 10069;
+var server_port = 10070;
 var server_host = "localhost";
 server.listen(server_port, server_host, function () {
-  console.log(
-    "Haca Live Music Server is up and running at port: %d",
-    server_port
-  );
+  console.log("Haca Live Music Server đang chạy tại cổng: %d", server_port);
 });
 require("dns").lookup(require("os").hostname(), function (err, add, fam) {
-  console.log("With the address of: " + add);
+  console.log("Với địa chỉ: " + add);
 });
 
 async function liveServer(params) {
@@ -40,7 +36,7 @@ async function liveServer(params) {
     if (idle.data.idle_playlist) {
       resolve(idle.data.idle_playlist);
     } else {
-      reject("Can't connect to server!");
+      reject("Không thể kết nối đến server lấy bài hát hàng đợi!");
     }
   });
 
@@ -156,11 +152,11 @@ var connectCounter = 0;
 io.on("connection", function (socket) {
   socket.on("conn", (username) => {
     io.emit("views");
-    console.log(`User: ${username} connected!`);
+    console.log(`Người dùng: ${username} đã kết nối!`);
     api["now_watching"].push(username);
     connectCounter = connectCounter + 1;
-    console.log("Someone just connected with ID: " + socket.id);
-    console.log("Total user(s): " + connectCounter);
+    console.log("Ai đó vừa kết nối với ID: " + socket.id);
+    console.log("Tổng số người đang xem: " + connectCounter);
     api["users_watching"] = connectCounter;
     api["now_watching"] = api["now_watching"].filter(onlyUnique);
     connectCounter = api["now_watching"].length;
@@ -168,7 +164,7 @@ io.on("connection", function (socket) {
   });
 
   socket.on("discon", (username) => {
-    console.log(`User: ${username} disconnected!`);
+    console.log(`Người dùng: ${username} đã ngắt kết nối!`);
     api["now_watching"].splice(api["now_watching"].indexOf(username), 1);
     connectCounter--;
     if (connectCounter < 0) {
@@ -186,7 +182,9 @@ io.on("connection", function (socket) {
   socket.on("disconnect", function () {
     // connectCounter--;
     io.emit("views");
-    console.log("Real disconnect! Total users: " + connectCounter);
+    console.log(
+      "Người dùng đã thoát! Tổng số người xem hiện tại: " + connectCounter
+    );
     // api["users_watching"] = connectCounter;
     // if (api["now_watching"].length > api["users_watching"]) {
     //   api["now_watching"].splice(-1);
@@ -203,7 +201,7 @@ io.on("connection", function (socket) {
   });
 
   socket.on("add-queue", (data) => {
-    console.log("Server received a video with ID: " + data.id);
+    console.log("Máy chủ đã nhận được video với ID: " + data.id);
     utils.getSnippet(data.id).then((res) => {
       utils.getChannelAvatar(res.items[0].snippet.channelId).then((res2) => {
         api["queue_by_users"].push({
@@ -273,16 +271,16 @@ app.get("/assets/logo", (req, res) => {
 
 app.get("/admin/api/shuffle", function (req, res) {
   liveServer("clear");
-  res.send("Shuffled songs successfully!");
+  res.send("Xáo trộn bài hát thành công!");
 });
 
 app.get("/admin/api/client/refresh", function (req, res) {
-  res.send("Send refresh emission to users successfully!");
+  res.send("Gửi tín hiệu Refresh đến người dùng thành công!");
   io.emit("refresh");
 });
 
 app.get("/admin/api/client/play", function (req, res) {
-  res.send("Send play emission to users successfully!");
+  res.send("Gửi tín hiệu Play đến người dùng thành công!");
   io.emit("play");
 });
 
@@ -290,19 +288,19 @@ app.get("/admin/api/songs/reload-order", function (req, res) {
   api["video_in_queue"].forEach((ele, index) => {
     ele.position = index + 1;
   });
-  res.send("Reloaded song orders successfully!");
+  res.send("Làm mới thứ tự bài hát thành công!");
 });
 
 app.get("/admin/api/player/forward", function (req, res) {
   api["elapsed_time"] += 10;
   io.emit("refresh");
-  res.send("Forwarded 10 seconds successfully!");
+  res.send("Tua tiến 10 giây thành công!");
 });
 
 app.get("/admin/api/player/rewind", function (req, res) {
   api["elapsed_time"] -= 10;
   io.emit("refresh");
-  res.send("Rewinded 10 seconds successfully!");
+  res.send("Tua lùi 10 giây thành công!");
 });
 
 app.get("/admin/api/player/next", function (req, res) {
@@ -325,7 +323,7 @@ app.get("/admin/api/player/next", function (req, res) {
   setTimeout(() => {
     io.emit("play");
   }, 500);
-  res.send("Skip song successfully!");
+  res.send("Bỏ qua bài hát thành công!");
 });
 
 app.get("/admin/api/player/previous", function (req, res) {
@@ -369,7 +367,7 @@ app.get("/admin/api/status", function (req, res) {
       (api["now_playing_video_info"] !== undefined &&
       api["now_playing_video_info"].video_title
         ? api["now_playing_video_info"].video_title
-        : "Loading...") +
+        : "Đang tải...") +
       "<br>Thứ tự bài hát đang phát: " +
       api["now_playing_position"] +
       "<br>Thời lượng bài hát đang phát: " +
@@ -420,11 +418,11 @@ app.get("/admin/api/queue/change", function (req, res) {
   setTimeout(() => {
     io.emit("play");
   }, 2500);
-  res.send("Successfully changed song!");
+  res.send("Đã chuyển bài hát thành công!");
 });
 
 app.get("/admin/api/songs/change", function (req, res) {
-  res.send("Method GET not allowed!");
+  res.send("Phương thức GET không được cho phép!");
 });
 
 app.post("/admin/api/songs/change", (req, res) => {
@@ -476,14 +474,14 @@ app.post("/admin/api/songs/change", (req, res) => {
   }, 2500);
   res.set("Content-Type", "text/html");
   res.send(
-    "Your video: <b>" +
+    "Video bạn chọn: <b>" +
       requestedVideo +
-      "</b> has been updated to now playing song!"
+      "</b> đã được thêm vào bài hát đang phát!"
   );
 });
 
 app.post("/admin/api/songs/vote/like", function (req, res) {
-  res.send("Added like to video successfully!");
+  res.send("Đã thích bài hát này thành công!");
 });
 
 app.get("/admin/api/songs/search", function (req, res) {
@@ -526,7 +524,7 @@ app.get("/admin/api/songs/search/suggest", function (req, res) {
 });
 
 app.get("/admin/api/server/ping", function (req, res) {
-  res.send("Server is up for " + process.uptime() + " seconds");
+  res.send("Máy chủ đang chạy được " + parseInt(process.uptime()) + " giây");
 });
 
 app.get("/admin/api/server/restart", function (req, res) {
@@ -543,8 +541,8 @@ app.get("/admin/api/server/shutdown", function (req, res) {
 app.get("/*", function (req, res) {
   var requestedUrl = req.protocol + "://" + req.get("Host") + req.url;
   res.send(
-    "Enter correct API link!<br>Your url: " +
+    "404! Vui lòng nhập địa chỉ API chính xác!<br>Địa chỉ bạn đã nhập: " +
       requestedUrl +
-      " does not match any of our URL routes!"
+      " không trùng với bất kỳ địa chỉ API công khai nào của Haca!"
   );
 });

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/assets/style" />
+    <title>Haca Live Music Control Panel</title>
+    <link rel="icon" href="/assets/logo" type="image/png" />
+    <style>
+      .hover-search {
+        padding: 5px;
+        user-select: none;
+      }
+
+      .hover-search:hover {
+        background-color: #f0f0f0;
+      }
+
+      .hover-effect {
+        background-color: #f0f0f0;
+      }
+
+      #search-results {
+        margin: 30px 0 45px;
+      }
+    </style>
+  </head>
+  <body class="container">
+    <h1 style="font-weight: 300; font-size: 25px">
+      <img
+        src="/assets/logo"
+        style="height: 40px; margin-left: -5px; margin-top: -5px"
+      />
+      <span style="font-weight: 900"
+        >Haca <span style="font-weight: 300">|</span></span
+      >
+      Live Music Control
+    </h1>
+    <h4>Xin chào, Dương Tùng Anh!</h4>
+
+    <div style="float: left; min-width: 50%">
+      <fieldset style="max-width: 550px; width: 100%">
+        <legend>Trạng thái</legend>
+        <div id="status">Đang tải dữ liệu...</div>
+      </fieldset>
+
+      <br />
+
+      <div style="margin: 15px 0">
+        <p style="color: red; display: none" id="error"></p>
+        <code style="color: red; display: none" id="error_code"></code>
+        <button
+          onclick='handleAlert("hide")'
+          style="display: none"
+          class="btn btn-default"
+        >
+          Đóng thông báo
+        </button>
+      </div>
+      <fieldset
+        style="
+          max-width: 550px;
+          width: 100%;
+          display: inline-flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 15px;
+        "
+      >
+        <legend>Điều khiển trực tiếp</legend>
+        <button class="btn btn-success" onclick="refreshClient()">
+          Gửi tín hiệu Refresh
+        </button>
+        <button class="btn btn-default" onclick="playClient()">
+          Gửi tín hiệu Play
+        </button>
+        <button class="btn btn-default" onclick="shuffle()">
+          Trộn bài hát
+        </button>
+        <button class="btn btn-default" onclick="reloadOrder()">
+          Sắp xếp lại thứ tự bài hát
+        </button>
+        <button class="btn btn-default" onclick="changeSong()">
+          Chuyển bài theo ID cụ thể
+        </button>
+        <button class="btn btn-default" onclick="forward()">
+          Tua nhanh 10 giây >>
+        </button>
+        <button class="btn btn-default" onclick="rewind()">
+          Tua lùi 10 giây <<
+        </button>
+        <button class="btn btn-default" onclick="next()">
+          Chuyển bài tiếp theo >
+        </button>
+        <button class="btn btn-default" onclick="previous()">
+          < Chuyển bài trước đó
+        </button>
+        <button class="btn btn-default">Thêm bài mới ở đầu danh sách</button>
+        <button class="btn btn-default">Thêm bài mới ở cuối danh sách</button>
+        <button class="btn btn-default">Xóa toàn bộ hàng chờ</button>
+        <button class="btn btn-default">Vô hiệu hóa hàng chờ</button>
+        <button class="btn btn-warning" onclick="restart()">
+          (!!) Khởi động lại máy chủ
+        </button>
+        <button class="btn btn-danger" onclick="shutdown()">
+          (!!!) Tắt máy chủ
+        </button>
+      </fieldset>
+      <br />
+      <br />
+      <fieldset style="max-width: 550px; width: 100%">
+        <legend>Tìm kiếm bài hát trên YouTube</legend>
+        <div style="display: flex; flex-direction: row">
+          <input
+            type="text"
+            placeholder="Gõ một từ khóa để xem gợi ý..."
+            onkeyup="suggest(this, event)"
+            onclick="suggest(this, event)"
+            class="form-control"
+            id="search-bar"
+          />
+          <button
+            class="btn btn-default"
+            id="search-btn"
+            style="margin-left: 10px"
+            onclick="search($('#search-bar').val())"
+          >
+            Tìm kiếm
+          </button>
+        </div>
+        <div
+          id="suggest"
+          style="
+            position: absolute;
+            width: max-content;
+            background-color: white;
+          "
+        ></div>
+        <div id="search-results">
+          <img
+            src="/assets/search"
+            width="200"
+            style="margin: 0 auto; display: block"
+          />
+          <p style="text-align: center">Kết quả tìm kiếm của bạn sẽ ở đây...</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <fieldset style="max-width: 550px; width: 100%; padding-bottom: 20px">
+      <legend>Xem trước</legend>
+      <div
+        style="
+          max-width: 550px;
+          height: calc(550px / (16 / 9));
+          pointer-events: none;
+        "
+      >
+        <div id="player">Đang tải dữ liệu...</div>
+      </div>
+    </fieldset>
+
+    <fieldset style="max-width: 550px; width: 100%; padding-bottom: 20px">
+      <legend>Hàng đợi</legend>
+      <div id="queue">Đang tải dữ liệu...</div>
+    </fieldset>
+
+    <script>
+      var tag = document.createElement("script");
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player("player", {
+          height: "100%",
+          width: "100%",
+          videoId: "M7lc1UVf-VE",
+          playerVars: {
+            playsinline: 1,
+          },
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+          },
+        });
+      }
+
+      setTimeout(() => {
+        player.playVideo();
+      }, 1000);
+
+      // 4. The API will call this function when the video player is ready.
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+
+      function onPlayerStateChange(event) {}
+
+      var index = 0;
+
+      $("#suggest").width($("#status").width() - $("#search-btn").width() - 35);
+
+      $(document).click(function (event) {
+        var $target = $(event.target);
+        if (
+          !$target.closest("#suggest").length &&
+          !$target.closest("#search-bar").length
+        ) {
+          $("#suggest").html("");
+          index = 0;
+        }
+      });
+
+      $("#search-bar").on("keydown", function (e) {
+        if ($("#suggest").html() != "") {
+          if (e.key == "ArrowDown") {
+            $(".hover-search")
+              .eq(index - 1)
+              .removeClass("hover-effect");
+            $(".hover-search").eq(index).addClass("hover-effect");
+            index++;
+          }
+          if (e.key == "ArrowUp") {
+            index--;
+            $(".hover-search")
+              .eq(index + 1)
+              .removeClass("hover-effect");
+            $(".hover-search").eq(index).addClass("hover-effect");
+          }
+        }
+        console.log(index);
+      });
+
+      function handleAlert(type, msg, code) {
+        type == "success" || type == "success_html"
+          ? $("#error").css("color", "green")
+          : $("#error").css("color", "red");
+        if (!code) {
+          $("#error").show();
+          $("#error").html(
+            msg +
+              `<br><br><button onclick='handleAlert("hide")' class="btn btn-default">Đóng thông báo</button>`
+          );
+        } else {
+          $("#error").show();
+          $("#error_code").show();
+          $("#error").text(msg);
+        }
+        type == "success_html" &&
+          $("#error").html(
+            msg +
+              `<br><br><button onclick='handleAlert("hide")' class="btn btn-default">Đóng thông báo</button>`
+          );
+        code &&
+          $("#error_code").html(
+            code +
+              `<button onclick='handleAlert("hide")' class="btn btn-default">Đóng thông báo</button>`
+          );
+        if (type == "hide") {
+          $("#error").hide();
+          $("#error_code").hide();
+        }
+        // window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function shuffle() {
+        $.get("/admin/api/shuffle", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => handleAlert("error", "Thất bại! Lỗi: " + err.status));
+      }
+
+      function getStatus() {
+        if ($("#status").text() == "") {
+          $("#status").text("Đang tải dữ liệu...");
+        }
+        $.get("/admin/api/status", function (data, status) {
+          $("#status").html(data);
+        });
+      }
+
+      function changeSong() {
+        var videoToPlay = prompt("Nhập ID video YouTube ở đây:");
+        if (videoToPlay === null) return;
+        if (
+          videoToPlay != "" &&
+          videoToPlay != null &&
+          videoToPlay.length == 11
+        ) {
+          $.post(
+            "/admin/api/songs/change",
+            { id: videoToPlay, requested_by: "Dương Tùng Anh" },
+            function (data, status) {
+              handleAlert("success_html", data);
+            }
+          ).catch((err) =>
+            handleAlert("error", "Thất bại!! Lỗi: " + err.status)
+          );
+        } else {
+          handleAlert("error", "Vui lòng điền ID video chính xác!");
+        }
+      }
+
+      function reloadOrder() {
+        $.get("/admin/api/songs/reload-order", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function refreshClient() {
+        $.get("/admin/api/client/refresh", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function forward() {
+        $.get("/admin/api/player/forward", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function rewind() {
+        $.get("/admin/api/player/rewind", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function next() {
+        $.get("/admin/api/player/next", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function previous() {
+        $.get("/admin/api/player/previous", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function playClient() {
+        $.get("/admin/api/client/play", function (data, status) {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function queue() {
+        if ($("#queue").text() == "") {
+          $("#queue").text("Đang tải dữ liệu...");
+        }
+        $.get("/admin/api/queue", function (data, status) {
+          $("#queue").html(data);
+        });
+      }
+
+      function restart() {
+        $.get("/admin/api/server/restart", (data, status) => {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function shutdown() {
+        if (
+          confirm(
+            "Bạn có chắc chắn muốn tắt máy chủ không? Lưu ý rằng hành động này sẽ phá hủy tất cả hoạt động bao gồm cả chức năng nghe nhạc trực tiếp và trò chuyện trực tiếp."
+          )
+        ) {
+          $.get("/admin/api/server/shutdown", (data, status) => {
+            handleAlert("success", data);
+          }).catch((err) => {
+            handleAlert(
+              "dont_hide",
+              "Thất bại! Lỗi: " +
+                err.status +
+                ". Máy chủ phản hồi với thông báo: ",
+              err.responseText
+            );
+          });
+        }
+      }
+
+      function suggest(element, event) {
+        var key = event.keyCode || event.charCode;
+        if (key === 13 || key === 38 || key === 40) return;
+        query = encodeURI(element.value);
+        if (query.length > 0) {
+          $.get(
+            "/admin/api/songs/search/suggest?query=" + query,
+            (data, status) => {
+              $("#suggest").html(data);
+            }
+          );
+        } else {
+          $("#suggest").html("");
+        }
+      }
+
+      function search(query) {
+        index = 0;
+        $("#search-bar").val(query);
+        $("#suggest").html("");
+        $.get("/admin/api/songs/search?query=" + query, (data, status) => {
+          $("#search-results").html(data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      function play(id) {
+        $.post(
+          "/admin/api/songs/change",
+          { id: id, requested_by: "Dương Tùng Anh" },
+          function (data, status) {
+            handleAlert("success_html", data);
+          }
+        ).catch((err) => handleAlert("error", "Thất bại!! Lỗi: " + err.status));
+      }
+
+      function changeSongInQueue(pos) {
+        $.get("/admin/api/queue/change?position=" + pos, (data, status) => {
+          handleAlert("success", data);
+        }).catch((err) => {
+          handleAlert(
+            "dont_hide",
+            "Thất bại! Lỗi: " +
+              err.status +
+              ". Máy chủ phản hồi với thông báo: ",
+            err.responseText
+          );
+        });
+      }
+
+      $("#search-bar").keypress(function (e) {
+        if (e.which == 13) {
+          search($("#search-bar").val());
+          $("#suggest").html("");
+          return false; //<---- Add this line
+        }
+      });
+
+      setInterval(() => {
+        getStatus();
+        queue();
+      }, 1000);
+    </script>
+  </body>
+</html>

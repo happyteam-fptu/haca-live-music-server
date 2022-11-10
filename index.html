@@ -16,6 +16,7 @@
 
     <!-- Latest compiled JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.3/socket.io.min.js"></script>
     <link rel="stylesheet" href="/assets/style" />
     <title>Haca Live Music Control Panel</title>
     <link rel="icon" href="/assets/logo" type="image/png" />
@@ -36,6 +37,12 @@
       #search-results {
         margin: 30px 0 45px;
       }
+
+      @media only screen and (max-width: 1200px) {
+        .main-panel {
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body class="container">
@@ -51,15 +58,21 @@
     </h1>
     <h4>Xin chào, Dương Tùng Anh!</h4>
 
-    <div style="float: left; min-width: 50%">
+    <div class="main-panel" style="float: left; min-width: 50%">
       <fieldset style="max-width: 550px; width: 100%">
-        <legend>Trạng thái</legend>
-        <div id="status">Đang tải dữ liệu...</div>
+        <legend>Xem trước</legend>
+        <div
+          style="
+            max-width: 550px;
+            height: calc(550px / (16 / 9));
+            pointer-events: none;
+          "
+        >
+          <div id="player">Đang tải dữ liệu...</div>
+        </div>
       </fieldset>
 
-      <br />
-
-      <div style="margin: 15px 0">
+      <div style="margin-top: 20px; margin-bottom: 20px">
         <p style="color: red; display: none" id="error"></p>
         <code style="color: red; display: none" id="error_code"></code>
         <button
@@ -70,57 +83,21 @@
           Đóng thông báo
         </button>
       </div>
-      <fieldset
-        style="
-          max-width: 550px;
-          width: 100%;
-          display: inline-flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 15px;
-        "
-      >
-        <legend>Điều khiển trực tiếp</legend>
-        <button class="btn btn-success" onclick="refreshClient()">
-          Gửi tín hiệu Refresh
-        </button>
-        <button class="btn btn-default" onclick="playClient()">
-          Gửi tín hiệu Play
-        </button>
-        <button class="btn btn-default" onclick="shuffle()">
-          Trộn bài hát
-        </button>
-        <button class="btn btn-default" onclick="reloadOrder()">
-          Sắp xếp lại thứ tự bài hát
-        </button>
-        <button class="btn btn-default" onclick="changeSong()">
-          Chuyển bài theo ID cụ thể
-        </button>
-        <button class="btn btn-default" onclick="forward()">
-          Tua nhanh 10 giây >>
-        </button>
-        <button class="btn btn-default" onclick="rewind()">
-          Tua lùi 10 giây <<
-        </button>
-        <button class="btn btn-default" onclick="next()">
-          Chuyển bài tiếp theo >
-        </button>
-        <button class="btn btn-default" onclick="previous()">
-          < Chuyển bài trước đó
-        </button>
-        <button class="btn btn-default">Thêm bài mới ở đầu danh sách</button>
-        <button class="btn btn-default">Thêm bài mới ở cuối danh sách</button>
-        <button class="btn btn-default">Xóa toàn bộ hàng chờ</button>
-        <button class="btn btn-default">Vô hiệu hóa hàng chờ</button>
-        <button class="btn btn-warning" onclick="restart()">
-          (!!) Khởi động lại máy chủ
-        </button>
-        <button class="btn btn-danger" onclick="shutdown()">
-          (!!!) Tắt máy chủ
-        </button>
+
+      <fieldset style="max-width: 550px; width: 100%; margin-bottom: 15px">
+        <legend>Chat trực tiếp</legend>
+        <div id="live-chat">
+          <img
+            src="/assets/chat"
+            height="200"
+            style="margin: 0 auto; display: block"
+          />
+          <p style="text-align: center">
+            Đoạn chat trực tiếp của mọi người sẽ hiển thị ở đây...
+          </p>
+        </div>
       </fieldset>
-      <br />
-      <br />
+
       <fieldset style="max-width: 550px; width: 100%">
         <legend>Tìm kiếm bài hát trên YouTube</legend>
         <div style="display: flex; flex-direction: row">
@@ -160,25 +137,72 @@
       </fieldset>
     </div>
 
-    <fieldset style="max-width: 550px; width: 100%; padding-bottom: 20px">
-      <legend>Xem trước</legend>
-      <div
-        style="
-          max-width: 550px;
-          height: calc(550px / (16 / 9));
-          pointer-events: none;
-        "
-      >
-        <div id="player">Đang tải dữ liệu...</div>
-      </div>
+    <fieldset
+      style="
+        max-width: 550px;
+        width: 100%;
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 15px;
+      "
+    >
+      <legend>Điều khiển trực tiếp</legend>
+      <button class="btn btn-success" onclick="refreshClient()">
+        Gửi tín hiệu Refresh
+      </button>
+      <button class="btn btn-default" onclick="playClient()">
+        Gửi tín hiệu Play
+      </button>
+      <button class="btn btn-default" onclick="shuffle()">Trộn bài hát</button>
+      <button class="btn btn-default" onclick="reloadOrder()">
+        Sắp xếp lại thứ tự bài hát
+      </button>
+      <button class="btn btn-default" onclick="changeSong()">
+        Chuyển bài theo ID cụ thể
+      </button>
+      <button class="btn btn-default" onclick="forward()">
+        Tua nhanh 10 giây >>
+      </button>
+      <button class="btn btn-default" onclick="rewind()">
+        Tua lùi 10 giây <<
+      </button>
+      <button class="btn btn-default" onclick="next()">
+        Chuyển bài tiếp theo >
+      </button>
+      <button class="btn btn-default" onclick="previous()">
+        < Chuyển bài trước đó
+      </button>
+      <button class="btn btn-default">Thêm bài mới ở đầu danh sách</button>
+      <button class="btn btn-default">Thêm bài mới ở cuối danh sách</button>
+      <button class="btn btn-default">Xóa toàn bộ hàng chờ</button>
+      <button class="btn btn-default">Vô hiệu hóa hàng chờ</button>
+      <button class="btn btn-warning" onclick="restart()">
+        (!!) Khởi động lại máy chủ
+      </button>
+      <button class="btn btn-danger" onclick="shutdown()">
+        (!!!) Tắt máy chủ
+      </button>
     </fieldset>
-
+    <br />
+    <br />
+    <fieldset style="max-width: 550px; width: 100%">
+      <legend>Trạng thái</legend>
+      <div id="status">Đang tải dữ liệu...</div>
+    </fieldset>
+    <br />
     <fieldset style="max-width: 550px; width: 100%; padding-bottom: 20px">
       <legend>Hàng đợi</legend>
       <div id="queue">Đang tải dữ liệu...</div>
     </fieldset>
 
     <script>
+      const socket = io();
+
+      setTimeout(() => {
+        socket.emit("refresh");
+      }, 2000);
+
       var tag = document.createElement("script");
 
       tag.src = "https://www.youtube.com/iframe_api";
@@ -187,30 +211,64 @@
 
       var player;
       function onYouTubeIframeAPIReady() {
-        player = new YT.Player("player", {
-          height: "100%",
-          width: "100%",
-          videoId: "M7lc1UVf-VE",
-          playerVars: {
-            playsinline: 1,
-          },
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-          },
-        });
+        $.get("/live", function (data, status) {
+          player = new YT.Player("player", {
+            height: "100%",
+            width: "100%",
+            videoId: data.now_playing_video_info.video_id,
+            playerVars: {
+              playsinline: 1,
+              controls: 0,
+            },
+            events: {
+              onReady: onPlayerReady,
+              onStateChange: onPlayerStateChange,
+            },
+          });
+        }).catch((err) => handleAlert("error", "Thất bại! Lỗi: " + err.status));
       }
 
       setTimeout(() => {
         player.playVideo();
-      }, 1000);
+      }, 6000);
+
+      socket.on("refresh", () => {
+        syncWithServer();
+      });
+
+      socket.on("play", () => {
+        $.get("/live", function (data, status) {
+          player.seekTo(data.elapsed_time, true);
+          player.playVideo();
+        }).catch((err) => handleAlert("error", "Thất bại! Lỗi: " + err.status));
+      });
 
       // 4. The API will call this function when the video player is ready.
       function onPlayerReady(event) {
-        event.target.playVideo();
+        $.get("/live", function (data, status) {
+          player.loadVideoById(
+            data.now_playing_video_info.video_id,
+            data.elapsed_time
+          );
+        }).catch((err) => handleAlert("error", "Thất bại! Lỗi: " + err.status));
       }
 
-      function onPlayerStateChange(event) {}
+      function onPlayerStateChange(event) {
+        if (event.data == 0) {
+          syncWithServer(); // ended = yellow
+        }
+      }
+
+      function syncWithServer() {
+        $.get("/live", function (data, status) {
+          player.seekTo(data.elapsed_time, true);
+          player.loadVideoById(
+            data.now_playing_video_info.video_id,
+            parseInt(data.elapsed_time)
+          );
+          player.playVideo();
+        }).catch((err) => handleAlert("error", "Thất bại! Lỗi: " + err.status));
+      }
 
       var index = 0;
 

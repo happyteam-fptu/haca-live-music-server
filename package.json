@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV='development' pm2-runtime start haca-server.js --watch"
+    "test": "NODE_ENV='development' pm2-runtime start haca-server.js --watch",
+    "start": "NODE_ENV='production' pm2 start haca-server.js"
   },
   "author": "TunnaDuong",
   "license": "ISC",

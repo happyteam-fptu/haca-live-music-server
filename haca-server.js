@@ -19,7 +19,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const api = {};
 var server_port = 10070;
-var server_host = "103.81.85.224";
+var server_host =
+  process.env.NODE_ENV == "development" ? "localhost" : "103.81.85.224";
 server.listen(server_port, server_host, function () {
   console.log("Haca Live Music Server đang chạy tại cổng: %d", server_port);
 });
@@ -267,6 +268,10 @@ app.get("/assets/search", (req, res) => {
 
 app.get("/assets/logo", (req, res) => {
   res.sendFile(path.join(__dirname + "/assets/app-logo.png"));
+});
+
+app.get("/assets/chat", (req, res) => {
+  res.sendFile(path.join(__dirname + "/assets/chat.png"));
 });
 
 app.get("/admin/api/shuffle", function (req, res) {

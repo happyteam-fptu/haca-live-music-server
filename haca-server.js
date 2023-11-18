@@ -19,8 +19,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const api = {};
 var server_port = 10070;
-var server_host =
-  process.env.NODE_ENV == "development" ? "0.0.0.0" : "103.81.85.224";
+var server_host = "localhost";
 server.listen(server_port, server_host, function () {
   console.log("Haca Live Music Server đang chạy tại cổng: %d", server_port);
 });

@@ -30,7 +30,7 @@ require("dns").lookup(require("os").hostname(), function (err, add, fam) {
 async function liveServer(params) {
   // Getting idle videos info from PHP server
   const idle = await axios
-    .get("https://api.c4k60.com/v1.0/radio/idle")
+    .get("https://c4k60.com/api/v1.0/radio/idle")
     .catch((e) => console.log("error:", e.code, e.hostname));
   let getIdle = new Promise((resolve, reject) => {
     if (idle.data.idle_playlist) {
